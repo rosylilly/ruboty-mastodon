@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruboty-mastodon (0.1.0)
+    ruboty-mastodon (0.2.0)
       lru_redux
       mastodon-api
       ruboty

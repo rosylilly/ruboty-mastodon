@@ -8,6 +8,7 @@ module Ruboty
       env :MASTODON_BASE_URL, 'Base URL of your mastodon server'
       env :MASTODON_BEARER_TOKEN, 'API token of your mastodon account'
       env :MASTODON_IGNORE_BOT_MESSAGE, 'Ignroe bot user message', optional: true
+      env :MASTODON_DEFAULT_VISIBILITY, 'Default visibility(private, unlisted or public. default: public)', optional: true
 
       def run
         init
@@ -15,7 +16,19 @@ module Ruboty
       end
 
       def say(message)
-        rest_client.create_status(message[:body])
+        visibility = message[:visibility] || @default_visiblity
+
+        options = {
+          visibility: visibility,
+          media_ids: message[:media_ids],
+          language: message[:language],
+          sensitive: !!message[:sensitive],
+          spoiler_text: message[:spoiler_text],
+        }
+
+        options[:in_reply_to_id] = message[:original][:status].id if visibility != 'public'
+
+        rest_client.create_status(message[:body], options)
       end
 
       protected
@@ -25,6 +38,8 @@ module Ruboty
         account = rest_client.verify_credentials
 
         ENV['RUBOTY_NAME'] ||= account.username
+
+        @default_visiblity = %w[public private unlisted].include?(ENV['MASTODON_DEFAULT_VISIBILITY']) ? ENV['MASTODON_DEFAULT_VISIBILITY'] : 'public'
       end
 
       def connect
